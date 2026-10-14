@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduGuard CBT — Ujian Online</title>
+  <!-- Tailwind CDN memerlukan internet. Untuk produksi, gunakan build Tailwind lokal. -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: { brand: { 50:'#eef2ff', 100:'#e0e7ff', 500:'#6366f1', 600:'#4f46e5', 700:'#4338ca', 900:'#1e1b4b' } },
+        boxShadow: { soft: '0 18px 50px rgba(30,41,59,.09)' }
+      }}
+    };
+  </script>
+  <style>
+    [x-cloak] { display: none !important; }
+    * { box-sizing: border-box; }
+    body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .no-select { -webkit-user-select: none; user-select: none; }
+    .option-card { transition: border-color .15s, background .15s, transform .15s; }
+    .option-card:hover { transform: translateY(-1px); }
+    .question-tile { transition: all .15s ease; }
+    .modal-backdrop { background: rgba(15, 23, 42, .68); backdrop-filter: blur(5px); }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; }
+      .print-card { box-shadow: none !important; border: 1px solid #ddd !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800">
+<div id="app" class="min-h-screen">
+  <!-- Header -->
+  <header class="border-b border-slate-200 bg-white">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+      <div class="flex items-center gap-3">
+        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200">
+          <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true"><path d="M7 3.75h7.5L19 8.25v12A1.75 1.75 0 0 1 17.25 22h-10.5A1.75 1.75 0 0 1 5 20.25V5.5a1.75 1.75 0 0 1 2-1.75Z" stroke="currentColor" stroke-width="1.7"/><path d="M14 4v5h5M8.5 13h7M8.5 16.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <p class="text-lg font-extrabold tracking-tight text-slate-900">EduGuard <span class="text-indigo-600">CBT</span></p>
+          <p class="text-xs font-medium text-slate-500">Assessment Portal</p>
+        </div>
+      </div>
+      <div class="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 sm:flex">
+        <span class="h-2 w-2 rounded-full bg-emerald-500"></span> Sistem ujian aktif
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <!-- LOGIN VIEW -->
+    <section id="loginView" class="mx-auto grid max-w-5xl overflow-hidden rounded-3xl bg-white shadow-soft md:grid-cols-2">
+      <div class="relative overflow-hidden bg-gradient-to-br from-indigo-700 via-indigo-600 to-blue-600 p-8 text-white sm:p-10">
+        <div class="absolute -right-16 -top-16 h-64 w-64 rounded-full border-[36px] border-white/10"></div>
+        <div class="absolute -bottom-20 -left-16 h-64 w-64 rounded-full bg-white/5"></div>
+        <div class="relative">
+          <span class="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide">PORTAL PESERTA</span>
+          <h1 class="mt-8 text-3xl font-extrabold leading-tight sm:text-4xl">Ujian lebih fokus.<br>Hasil lebih terukur.</h1>
+          <p class="mt-4 max-w-sm leading-7 text-indigo-100">Masuk menggunakan nomor peserta dan token ujian yang diberikan oleh pengawas.</p>
+          <div class="mt-10 space-y-4">
+            <div class="flex items-start gap-3"><span class="mt-0.5 flex h-7 w-7 items-center justify-center rounded-lg bg-white/15 text-sm">✓</span><div><p class="font-semibold">Jawaban tersimpan di sesi ini</p><p class="mt-1 text-sm text-indigo-100">Perubahan jawaban langsung diperbarui di layar.</p></div></div>
+            <div class="flex items-start gap-3"><span class="mt-0.5 flex h-7 w-7 items-center justify-center rounded-lg bg-white/15 text-sm">◷</span><div><p class="font-semibold">Timer ujian otomatis</p><p class="mt-1 text-sm text-indigo-100">Ujian dikirim otomatis saat waktu habis.</p></div></div>
+            <div class="flex items-start gap-3"><span class="mt-0.5 flex h-7 w-7 items-center justify-center rounded-lg bg-white/15 text-sm">⌁</span><div><p class="font-semibold">Mode fokus</p><p class="mt-1 text-sm text-indigo-100">Peringatan saat tab berpindah atau fullscreen ditutup.</p></div></div>
+          </div>
+          <p class="mt-12 text-xs text-indigo-200">Demo CBT • Gunakan sesuai arahan pengawas</p>
+        </div>
+      </div>
+      <div class="p-8 sm:p-10">
+        <div class="mb-8">
+          <p class="text-sm font-bold uppercase tracking-widest text-indigo-600">Selamat datang</p>
+          <h2 class="mt-2 text-2xl font-extrabold text-slate-900">Masuk ke ruang ujian</h2>
+          <p class="mt-2 text-sm leading-6 text-slate-500">Lengkapi data berikut untuk memulai sesi ujian.</p>
+        </div>
+        <form id="loginForm" class="space-y-5">
+          <div>
+            <label for="studentName" class="mb-2 block text-sm font-semibold text-slate-700">Nama lengkap</label>
+            <input id="studentName" required maxlength="80" autocomplete="name" placeholder="Masukkan nama lengkap" class="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100">
+          </div>
+          <div>
+            <label for="participantId" class="mb-2 block text-sm font-semibold text-slate-700">Nomor peserta</label>
+            <input id="participantId" required maxlength="30" autocomplete="username" placeholder="Contoh: 20260001" class="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100">
+          </div>
+          <div>
+            <label for="examToken" class="mb-2 block text-sm font-semibold text-slate-700">Token ujian</label>
+            <input id="examToken" required maxlength="30" autocomplete="off" placeholder="Masukkan token dari pengawas" class="w-full rounded-xl border border-slate-300 px-4 py-3 uppercase outline-none transition placeholder:normal-case placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100">
+            <p class="mt-2 text-xs text-slate-500">Token demo: <code class="rounded bg-slate-100 px-1.5 py-0.5 font-bold text-slate-700">UJIAN2026</code></p>
+          </div>
+          <div id="loginError" class="hidden rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert"></div>
+          <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3.5 font-bold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200">
+            Masuk ke ujian <span aria-hidden="true">→</span>
+          </button>
+        </form>
+        <div class="mt-6 flex gap-3 rounded-xl bg-amber-50 p-3.5 text-xs leading-5 text-amber-800">
+          <span class="text-base">ⓘ</span><p>Pastikan perangkat terisi daya dan koneksi stabil. Setelah ujian dimulai, hindari berpindah tab.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- EXAM VIEW -->
+    <section id="examView" class="hidden">
+      <div class="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div><p class="text-sm font-semibold text-indigo-600">RUANG UJIAN</p><h1 id="examTitle" class="mt-1 text-2xl font-extrabold text-slate-900">Ujian Pengetahuan Umum</h1><p id="studentMeta" class="mt-1 text-sm text-slate-500"></p></div>
+        <div class="flex items-center gap-3">
+          <div id="timerBox" class="rounded-2xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Sisa waktu</p><p id="timer" class="mt-0.5 font-mono text-2xl font-extrabold tabular-nums text-slate-900">20:00</p>
+          </div>
+          <button id="fullscreenBtn" type="button" class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50">⛶ Fullscreen</button>
+        </div>
+      </div>
+
+      <div class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3">
+        <div class="flex items-center gap-3"><div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-lg">🛡️</div><div><p class="text-sm font-bold text-indigo-950">Mode fokus ujian aktif</p><p class="text-xs text-indigo-700">Pelanggaran terdeteksi: <span id="violationCount" class="font-extrabold">0</span></p></div></div>
+        <p class="text-xs text-indigo-700">Jangan menutup halaman atau berpindah tab.</p>
+      </div>
+
+      <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-5">
+            <div><p id="questionCounter" class="text-sm font-bold text-indigo-600">SOAL 1 DARI 10</p><p class="mt-1 text-xs text-slate-500">Pilih satu jawaban yang paling tepat.</p></div>
+            <span id="questionType" class="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600">Pilihan Ganda</span>
+          </div>
+          <div class="py-7">
+            <h2 id="questionText" class="text-lg font-bold leading-8 text-slate-900 sm:text-xl"></h2>
+            <div id="options" class="mt-6 space-y-3"></div>
+          </div>
+          <div class="flex flex-col-reverse justify-between gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center">
+            <button id="doubtBtn" type="button" class="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800 hover:bg-amber-100">⚑ Tandai ragu-ragu</button>
+            <div class="flex gap-3">
+              <button id="prevBtn" type="button" class="flex-1 rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 sm:flex-none">← Sebelumnya</button>
+              <button id="nextBtn" type="button" class="flex-1 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-700 sm:flex-none">Berikutnya →</button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="space-y-5">
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center justify-between"><h2 class="font-extrabold text-slate-900">Navigasi soal</h2><span id="progressText" class="text-xs font-semibold text-slate-500">0/10 dijawab</span></div>
+            <div class="mt-4 grid grid-cols-5 gap-2" id="questionGrid"></div>
+            <div class="mt-5 space-y-2.5 border-t border-slate-100 pt-4 text-xs font-medium text-slate-600">
+              <div class="flex items-center gap-2"><span class="h-3 w-3 rounded bg-emerald-500"></span>Sudah dijawab</div>
+              <div class="flex items-center gap-2"><span class="h-3 w-3 rounded bg-amber-400"></span>Ragu-ragu</div>
+              <div class="flex items-center gap-2"><span class="h-3 w-3 rounded border border-slate-300 bg-slate-100"></span>Belum dijawab</div>
+              <div class="flex items-center gap-2"><span class="h-3 w-3 rounded border-2 border-indigo-600 bg-white"></span>Soal aktif</div>
+            </div>
+            <button id="submitBtn" type="button" class="mt-6 w-full rounded-xl bg-slate-900 px-4 py-3.5 text-sm font-bold text-white hover:bg-slate-800">Selesaikan ujian</button>
+            <p class="mt-3 text-center text-xs leading-5 text-slate-500">Pastikan jawaban sudah diperiksa sebelum mengirim.</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-4">
+            <p class="text-sm font-bold text-slate-800">Tips ujian</p><p class="mt-1 text-xs leading-5 text-slate-500">Gunakan navigasi untuk meninjau soal. Jawaban dan tanda ragu-ragu bisa diubah sebelum ujian dikirim.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- RESULT VIEW -->
+    <section id="resultView" class="hidden">
+      <div class="mx-auto max-w-3xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft print-card">
+        <div class="bg-gradient-to-r from-indigo-700 to-blue-600 px-6 py-10 text-center text-white sm:px-10">
+          <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-3xl">✓</div>
+          <p id="resultEyebrow" class="mt-5 text-sm font-bold uppercase tracking-[.2em] text-indigo-100">Ujian selesai</p>
+          <h1 id="resultHeading" class="mt-2 text-3xl font-extrabold">Hasil Ujian</h1>
+          <p id="resultSubheading" class="mt-2 text-indigo-100">Terima kasih telah mengikuti ujian.</p>
+        </div>
+        <div class="p-6 sm:p-10">
+          <div class="grid gap-4 sm:grid-cols-3">
+            <div class="rounded-2xl bg-indigo-50 p-5 text-center"><p class="text-xs font-bold uppercase tracking-wider text-indigo-600">Nilai akhir</p><p id="finalScore" class="mt-2 text-4xl font-extrabold text-indigo-950">0</p><p class="mt-1 text-xs text-indigo-700">Skala 0–100</p></div>
+            <div class="rounded-2xl bg-emerald-50 p-5 text-center"><p class="text-xs font-bold uppercase tracking-wider text-emerald-700">Terjawab benar</p><p id="correctCount" class="mt-2 text-4xl font-extrabold text-emerald-900">0/10</p><p class="mt-1 text-xs text-emerald-700">Jawaban benar</p></div>
+            <div class="rounded-2xl bg-slate-100 p-5 text-center"><p class="text-xs font-bold uppercase tracking-wider text-slate-600">Tidak dijawab</p><p id="unansweredCount" class="mt-2 text-4xl font-extrabold text-slate-900">0</p><p class="mt-1 text-xs text-slate-600">Soal kosong</p></div>
+          </div>
+          <div class="mt-6 rounded-2xl border border-slate-200 p-5">
+            <h2 class="font-extrabold text-slate-900">Ringkasan peserta</h2>
+            <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+              <div><dt class="text-slate-500">Nama</dt><dd id="resultName" class="mt-1 font-bold text-slate-800">—</dd></div>
+              <div><dt class="text-slate-500">Nomor peserta</dt><dd id="resultId" class="mt-1 font-bold text-slate-800">—</dd></div>
+              <div><dt class="text-slate-500">Waktu pengiriman</dt><dd id="resultDate" class="mt-1 font-bold text-slate-800">—</dd></div>
+              <div><dt class="text-slate-500">Sisa waktu saat selesai</dt><dd id="resultTime" class="mt-1 font-bold text-slate-800">—</dd></div>
+              <div><dt class="text-slate-500">Pelanggaran fokus terdeteksi</dt><dd id="resultViolations" class="mt-1 font-bold text-slate-800">0</dd></div>
+              <div><dt class="text-slate-500">Status</dt><dd id="resultStatus" class="mt-1 font-bold text-emerald-700">Terkirim</dd></div>
+            </dl>
+          </div>
+          <div class="no-print mt-7 flex flex-col gap-3 sm:flex-row">
+            <button id="printBtn" type="button" class="flex-1 rounded-xl bg-indigo-600 px-5 py-3 font-bold text-white hover:bg-indigo-700">Cetak / Simpan PDF</button>
+            <button id="downloadBtn" type="button" class="flex-1 rounded-xl border border-slate-300 px-5 py-3 font-bold text-slate-700 hover:bg-slate-50">Unduh ringkasan (.txt)</button>
+          </div>
+          <p class="mt-5 text-center text-xs leading-5 text-slate-500">Catatan: nilai ini dihitung di browser untuk demo. Untuk ujian resmi, lakukan penilaian ulang di server.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="mx-auto max-w-7xl px-4 pb-8 pt-3 text-center text-xs text-slate-400 sm:px-6 lg:px-8">
+    © <span id="year"></span> EduGuard CBT · Portal Ujian Digital
+  </footer>
+</div>
+
+<!-- Warning modal -->
+<div id="warningModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="warningTitle">
+  <div class="w-full max-w-md rounded-3xl bg-white p-7 shadow-2xl">
+    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 text-2xl text-red-700">!</div>
+    <h2 id="warningTitle" class="mt-5 text-center text-xl font-extrabold text-slate-900">Peringatan pelanggaran fokus</h2>
+    <p id="warningMessage" class="mt-3 text-center text-sm leading-6 text-slate-600">Aktivitas di luar halaman ujian terdeteksi.</p>
+    <div class="mt-4 rounded-xl bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-800">Jumlah pelanggaran: <span id="modalViolationCount">1</span></div>
+    <p class="mt-3 text-center text-xs leading-5 text-slate-500">Kembali ke ujian dan tekan tombol di bawah. Browser hanya dapat mendeteksi sebagian aktivitas.</p>
+    <button id="ackWarningBtn" type="button" class="mt-6 w-full rounded-xl bg-red-600 px-5 py-3 font-bold text-white hover:bg-red-700">Saya mengerti, kembali ke ujian</button>
+  </div>
+</div>
+
+<!-- Submit confirmation modal -->
+<div id="confirmModal" class="modal-backdrop fixed inset-0 z-40 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+  <div class="w-full max-w-md rounded-3xl bg-white p-7 shadow-2xl">
+    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 text-2xl text-indigo-700">?</div>
+    <h2 id="confirmTitle" class="mt-5 text-center text-xl font-extrabold text-slate-900">Kirim jawaban sekarang?</h2>
+    <p id="confirmMessage" class="mt-3 text-center text-sm leading-6 text-slate-600">Setelah dikirim, jawaban tidak dapat diubah.</p>
+    <div class="mt-6 grid grid-cols-2 gap-3">
+      <button id="cancelSubmitBtn" type="button" class="rounded-xl border border-slate-300 px-4 py-3 font-bold text-slate-700 hover:bg-slate-50">Periksa lagi</button>
+      <button id="confirmSubmitBtn" type="button" class="rounded-xl bg-indigo-600 px-4 py-3 font-bold text-white hover:bg-indigo-700">Ya, kirim</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ============================================================
+     KONFIGURASI DEMO
+     Untuk produksi: pindahkan token, durasi, bank soal, jawaban
+     benar, serta penilaian ke backend. Jangan percaya skor client.
+     ============================================================ */
+  const CONFIG = {
+    token: "UJIAN2026",
+    durationSeconds: 20 * 60,
+    shuffleQuestions: false,
+    shuffleOptions: false,
+    warnOnTabSwitch: true
+  };
+
+  // Bank soal demo. Ganti dengan materi ujian Anda.
+  const QUESTION_BANK = [
+    { id: 1, text: "Planet yang dikenal sebagai Planet Merah adalah …", options: ["Venus", "Mars", "Jupiter", "Merkurius", "Saturnus"], answer: 1 },
+    { id: 2, text: "Hasil dari 12 × 8 adalah …", options: ["86", "92", "96", "108", "112"], answer: 2 },
+    { id: 3, text: "Proses tumbuhan membuat makanan dengan bantuan cahaya disebut …", options: ["Respirasi", "Transpirasi", "Fermentasi", "Fotosintesis", "Adaptasi"], answer: 3 },
+    { id: 4, text: "Ibu kota Indonesia berdasarkan lokasi pusat pemerintahan yang direncanakan adalah …", options: ["Bandung", "Surabaya", "Medan", "Makassar", "Nusantara"], answer: 4 },
+    { id: 5, text: "Sinonim kata “cermat” yang paling tepat adalah …", options: ["Teliti", "Ceroboh", "Lambat", "Ragu", "Bising"], answer: 0 },
+    { id: 6, text: "Satuan SI untuk kuat arus listrik adalah …", options: ["Volt", "Watt", "Ampere", "Ohm", "Joule"], answer: 2 },
+    { id: 7, text: "Organ tubuh manusia yang berfungsi memompa darah adalah …", options: ["Paru-paru", "Ginjal", "Hati", "Jantung", "Lambung"], answer: 3 },
+    { id: 8, text: "Bentuk pecahan dari 0,75 adalah …", options: ["1/4", "1/2", "2/3", "3/4", "4/5"], answer: 3 },
+    { id: 9, text: "Sumpah Pemuda diperingati setiap tanggal …", options: ["1 Juni", "17 Agustus", "28 Oktober", "10 November", "20 Mei"], answer: 2 },
+    { id: 10, text: "Bahasa yang digunakan untuk mengatur tampilan halaman web adalah …", options: ["HTML", "CSS", "SQL", "Python", "C++"], answer: 1 }
+  ];
+
+  const $ = id => document.getElementById(id);
+  const views = { login: $("loginView"), exam: $("examView"), result: $("resultView") };
+  let student = { name: "", id: "" };
+  let questions = [];
+  let answers = {};
+  let doubtful = new Set();
+  let currentIndex = 0;
+  let remainingSeconds = CONFIG.durationSeconds;
+  let timerInterval = null;
+  let violations = 0;
+  let examActive = false;
+  let examSubmitted = false;
+  let warningOpen = false;
+  let submitReason = "manual";
+  let lastWarningAt = 0;
+
+  $("year").textContent = new Date().getFullYear();
+
+  function showView(name) {
+    Object.values(views).forEach(v => v.classList.add("hidden"));
+    views[name].classList.remove("hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function shuffledCopy(array) {
+    const copy = array.slice();
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function prepareQuestions() {
+    questions = QUESTION_BANK.map(q => {
+      let opts = q.options.map((text, originalIndex) => ({ text, originalIndex }));
+      if (CONFIG.shuffleOptions) opts = shuffledCopy(opts);
+      return {
+        ...q,
+        options: opts.map(o => o.text),
+        correctOption: opts.findIndex(o => o.originalIndex === q.answer)
+      };
+    });
+    if (CONFIG.shuffleQuestions) questions = shuffledCopy(questions);
+  }
+
+  $("loginForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    const name = $("studentName").value.trim();
+    const id = $("participantId").value.trim();
+    const token = $("examToken").value.trim().toUpperCase();
+    const error = $("loginError");
+    error.classList.add("hidden");
+
+    if (name.length < 2 || id.length < 2 || !token) {
+      error.textContent = "Periksa kembali nama, nomor peserta, dan token ujian.";
+      error.classList.remove("hidden");
+      return;
+    }
+    // DEMO ONLY: validasi client-side dapat dilihat/dilewati melalui DevTools.
+    if (token !== CONFIG.token) {
+      error.textContent = "Token ujian tidak valid. Periksa token dari pengawas.";
+      error.classList.remove("hidden");
+      return;
+    }
+
+    student = { name, id };
+    prepareQuestions();
+    answers = {};
+    doubtful = new Set();
+    currentIndex = 0;
+    remainingSeconds = CONFIG.durationSeconds;
+    violations = 0;
+    examSubmitted = false;
+    examActive = false;
+    $("studentMeta").textContent = `${student.name} · Nomor peserta ${student.id}`;
+    showView("exam");
+
+    // Fullscreen harus dipicu interaksi pengguna. Jika gagal, ujian tetap bisa
+    // dimulai setelah tombol fullscreen ditekan (browser dapat menolak otomatis).
+    try {
+      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch (_) {
+      // Izin fullscreen bisa ditolak browser; tampilkan instruksi di layar.
+    }
+    examActive = true;
+    renderQuestion();
+    renderNavigation();
+    startTimer();
+    updateTimerDisplay();
+  });
+
+  function renderQuestion() {
+    const q = questions[currentIndex];
+    $("questionCounter").textContent = `SOAL ${currentIndex + 1} DARI ${questions.length}`;
+    $("questionText").textContent = q.text;
+    $("questionType").textContent = "Pilihan Ganda";
+    $("options").replaceChildren();
+
+    q.options.forEach((option, index) => {
+      const label = document.createElement("label");
+      label.className = "option-card flex cursor-pointer items-start gap-3 rounded-2xl border p-4 " +
+        (answers[q.id] === index ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100" : "border-slate-200 hover:border-indigo-300 hover:bg-slate-50");
+      const radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = "answer";
+      radio.value = index;
+      radio.checked = answers[q.id] === index;
+      radio.className = "sr-only";
+      const letter = document.createElement("span");
+      letter.className = "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-sm font-extrabold " +
+        (answers[q.id] === index ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-300 bg-white text-slate-600");
+      letter.textContent = String.fromCharCode(65 + index);
+      const text = document.createElement("span");
+      text.className = "pt-1 text-sm font-medium leading-6 text-slate-700";
+      text.textContent = option;
+      label.append(radio, letter, text);
+      label.addEventListener("click", () => {
+        answers[q.id] = index;
+        renderQuestion();
+        renderNavigation();
+      });
+      $("options").appendChild(label);
+    });
+
+    $("prevBtn").disabled = currentIndex === 0;
+    $("prevBtn").classList.toggle("opacity-40", currentIndex === 0);
+    $("nextBtn").textContent = currentIndex === questions.length - 1 ? "Soal terakhir ✓" : "Berikutnya →";
+    $("doubtBtn").textContent = doubtful.has(q.id) ? "⚑ Hapus tanda ragu-ragu" : "⚑ Tandai ragu-ragu";
+    $("doubtBtn").classList.toggle("bg-amber-100", doubtful.has(q.id));
+  }
+
+  function renderNavigation() {
+    const grid = $("questionGrid");
+    grid.replaceChildren();
+    questions.forEach((q, index) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = String(index + 1);
+      button.setAttribute("aria-label", `Buka soal ${index + 1}`);
+      let cls = "question-tile flex aspect-square items-center justify-center rounded-xl border text-sm font-extrabold ";
+      if (answers[q.id] !== undefined) cls += "border-emerald-600 bg-emerald-500 text-white";
+      else if (doubtful.has(q.id)) cls += "border-amber-400 bg-amber-400 text-amber-950";
+      else cls += "border-slate-200 bg-slate-100 text-slate-600 hover:border-slate-400";
+      if (index === currentIndex) cls += " ring-2 ring-indigo-600 ring-offset-2";
+      button.className = cls;
+      button.addEventListener("click", () => { currentIndex = index; renderQuestion(); renderNavigation(); });
+      grid.appendChild(button);
+    });
+    const count = Object.keys(answers).length;
+    $("progressText").textContent = `${count}/${questions.length} dijawab`;
+  }
+
+  $("prevBtn").addEventListener("click", () => {
+    if (currentIndex > 0) { currentIndex--; renderQuestion(); renderNavigation(); }
+  });
+  $("nextBtn").addEventListener("click", () => {
+    if (currentIndex < questions.length - 1) { currentIndex++; renderQuestion(); renderNavigation(); }
+  });
+  $("doubtBtn").addEventListener("click", () => {
+    const id = questions[currentIndex].id;
+    if (doubtful.has(id)) doubtful.delete(id); else doubtful.add(id);
+    renderQuestion(); renderNavigation();
+  });
+
+  function startTimer() {
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      if (!examActive || examSubmitted) return;
+      remainingSeconds = Math.max(0, remainingSeconds - 1);
+      updateTimerDisplay();
+      if (remainingSeconds <= 0) {
+        submitReason = "timeout";
+        finishExam(true);
+      }
+    }, 1000);
+  }
+
+  function updateTimerDisplay() {
+    const min = Math.floor(remainingSeconds / 60);
+    const sec = remainingSeconds % 60;
+    $("timer").textContent = `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+    const urgent = remainingSeconds <= 60;
+    $("timerBox").classList.toggle("border-red-300", urgent);
+    $("timerBox").classList.toggle("bg-red-50", urgent);
+    $("timer").classList.toggle("text-red-700", urgent);
+    $("timer").classList.toggle("animate-pulse", urgent);
+  }
+
+  function openWarning(message) {
+    if (!examActive || examSubmitted || warningOpen) return;
+    const now = Date.now();
+    // Hindari beberapa event untuk satu perpindahan tab agar tidak menghitung ganda.
+    if (now - lastWarningAt < 1200) return;
+    lastWarningAt = now;
+    violations++;
+    warningOpen = true;
+    $("violationCount").textContent = violations;
+    $("modalViolationCount").textContent = violations;
+    $("warningMessage").textContent = message;
+    $("warningModal").classList.remove("hidden");
+    $("warningModal").classList.add("flex");
+  }
+
+  function closeWarning() {
+    warningOpen = false;
+    $("warningModal").classList.add("hidden");
+    $("warningModal").classList.remove("flex");
+    if (examActive && !examSubmitted && !document.fullscreenElement) {
+      // Tidak memaksa fullscreen tanpa aksi pengguna karena browser dapat menolak.
+      $("fullscreenBtn").classList.add("ring-2", "ring-amber-400");
+    }
+  }
+  $("ackWarningBtn").addEventListener("click", closeWarning);
+
+  // Browser hanya dapat mengamati beberapa sinyal, bukan mengunci OS/aplikasi lain.
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && CONFIG.warnOnTabSwitch) openWarning("Anda berpindah tab atau halaman ujian menjadi tidak terlihat. Aktivitas ini dicatat sebagai pelanggaran fokus.");
+  });
+  window.addEventListener("blur", () => {
+    if (CONFIG.warnOnTabSwitch) openWarning("Jendela ujian kehilangan fokus. Browser tidak dapat memastikan aplikasi apa yang dibuka.");
+  });
+  document.addEventListener("fullscreenchange", () => {
+    if (examActive && !examSubmitted && !document.fullscreenElement) {
+      openWarning("Mode fullscreen telah ditutup. Kembali ke ujian dan aktifkan fullscreen kembali.");
+    } else {
+      $("fullscreenBtn").classList.remove("ring-2", "ring-amber-400");
+    }
+  });
+
+  $("fullscreenBtn").addEventListener("click", async () => {
+    try {
+      if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+      else await document.exitFullscreen();
+    } catch (_) {
+      alert("Fullscreen tidak dapat diaktifkan. Coba gunakan browser terbaru dan izinkan fullscreen.");
+    }
+  });
+
+  // Pencegahan ringan di halaman ujian. Ini bukan pengganti secure exam browser.
+  document.addEventListener("contextmenu", event => {
+    if (examActive && !examSubmitted) event.preventDefault();
+  });
+  document.addEventListener("copy", event => {
+    if (examActive && !examSubmitted) event.preventDefault();
+  });
+  document.addEventListener("cut", event => {
+    if (examActive && !examSubmitted) event.preventDefault();
+  });
+  document.addEventListener("paste", event => {
+    if (examActive && !examSubmitted) event.preventDefault();
+  });
+  document.addEventListener("selectstart", event => {
+    if (examActive && !examSubmitted) event.preventDefault();
+  });
+  document.addEventListener("keydown", event => {
+    if (!examActive || examSubmitted) return;
+    const key = event.key.toLowerCase();
+    const blocked = key === "f12" ||
+      (event.ctrlKey && ["u", "c", "v", "x", "s", "p"].includes(key)) ||
+      (event.ctrlKey && event.shiftKey && ["i", "j", "c"].includes(key)) ||
+      (event.metaKey && ["c", "v", "x", "s", "p"].includes(key));
+    if (blocked) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    // Alt+Tab dan shortcut OS tidak dapat dicegah dengan aman oleh halaman web.
+  }, true);
+
+  $("submitBtn").addEventListener("click", () => {
+    if (!examActive || examSubmitted) return;
+    submitReason = "manual";
+    const unanswered = questions.length - Object.keys(answers).length;
+    $("confirmMessage").textContent = unanswered > 0
+      ? `Masih ada ${unanswered} soal belum dijawab. Setelah dikirim, jawaban tidak dapat diubah.`
+      : "Semua soal sudah dijawab. Setelah dikirim, jawaban tidak dapat diubah.";
+    $("confirmModal").classList.remove("hidden");
+    $("confirmModal").classList.add("flex");
+  });
+  $("cancelSubmitBtn").addEventListener("click", () => {
+    $("confirmModal").classList.add("hidden");
+    $("confirmModal").classList.remove("flex");
+  });
+  $("confirmSubmitBtn").addEventListener("click", () => {
+    $("confirmModal").classList.add("hidden");
+    $("confirmModal").classList.remove("flex");
+    finishExam(false);
+  });
+
+  function finishExam(auto) {
+    if (examSubmitted) return;
+    examSubmitted = true;
+    examActive = false;
+    clearInterval(timerInterval);
+    const correct = questions.filter(q => answers[q.id] === q.correctOption).length;
+    const answered = Object.keys(answers).length;
+    const unanswered = questions.length - answered;
+    const score = Math.round((correct / questions.length) * 100);
+    const timeText = `${String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:${String(remainingSeconds % 60).padStart(2, "0")}`;
+
+    $("resultEyebrow").textContent = auto ? "Waktu habis · Terkirim otomatis" : "Ujian berhasil dikirim";
+    $("resultHeading").textContent = auto ? "Waktu Ujian Habis" : "Hasil Ujian";
+    $("resultSubheading").textContent = auto ? "Jawaban yang tersimpan telah dikirim otomatis." : "Terima kasih telah menyelesaikan ujian.";
+    $("finalScore").textContent = score;
+    $("correctCount").textContent = `${correct}/${questions.length}`;
+    $("unansweredCount").textContent = unanswered;
+    $("resultName").textContent = student.name;
+    $("resultId").textContent = student.id;
+    $("resultDate").textContent = new Date().toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
+    $("resultTime").textContent = timeText;
+    $("resultViolations").textContent = violations;
+    $("resultStatus").textContent = auto ? "Terkirim otomatis" : "Terkirim";
+    $("resultStatus").className = "mt-1 font-bold text-emerald-700";
+    $("warningModal").classList.add("hidden");
+    $("warningModal").classList.remove("flex");
+    $("confirmModal").classList.add("hidden");
+    $("confirmModal").classList.remove("flex");
+    showView("result");
+
+    // Tempat integrasi backend: POST jawaban, identitas, waktu, dan log pelanggaran.
+    // Jangan kirim kunci jawaban dari client sebagai sumber nilai yang tepercaya.
+    console.info("Demo result:", { participantId: student.id, answers, violations, score, submitReason });
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  $("printBtn").addEventListener("click", () => window.print());
+  $("downloadBtn").addEventListener("click", () => {
+    const text = [
+      "RINGKASAN HASIL UJIAN — EDUGUARD CBT",
+      "======================================",
+      `Nama: ${$("resultName").textContent}`,
+      `Nomor peserta: ${$("resultId").textContent}`,
+      `Waktu pengiriman: ${$("resultDate").textContent}`,
+      `Nilai akhir: ${$("finalScore").textContent}/100`,
+      `Jawaban benar: ${$("correctCount").textContent}`,
+      `Tidak dijawab: ${$("unansweredCount").textContent}`,
+      `Sisa waktu: ${$("resultTime").textContent}`,
+      `Pelanggaran fokus terdeteksi: ${$("resultViolations").textContent}`,
+      `Status: ${$("resultStatus").textContent}`,
+      "",
+      "Catatan: nilai dihitung oleh browser untuk demo."
+    ].join("\n");
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `hasil-ujian-${student.id || "peserta"}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  });
+})();
+</script>
+</body>
+</html>
